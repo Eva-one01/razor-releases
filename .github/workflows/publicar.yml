@@ -1,0 +1,33 @@
+# Publica una versión de Clipsy: copia los instaladores compilados en el repositorio Clipsy
+# (release «build-vX.Y.Z») a una release «vX.Y.Z» de este repositorio, que es de donde la web
+# descarga y la app busca actualizaciones. Se lanza a mano: Actions → Publicar → Run workflow.
+name: Publicar
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión (por ejemplo 1.4.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      V: ${{ inputs.version }}
+    steps:
+      - name: Descargar los instaladores del repositorio Clipsy
+        run: |
+          mkdir dist && cd dist
+          gh release download "build-v$V" -R Eva-one01/Clipsy
+          ls -la
+          grep -q "version: $V" latest.yml
+
+      - name: Crear la release
+        run: |
+          cd dist
+          gh release create "v$V" * -R "$GITHUB_REPOSITORY" --title "Clipsy $V" --notes "Clipsy $V" --latest
